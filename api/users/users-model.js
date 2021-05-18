@@ -28,38 +28,21 @@ async function findBy(filter) {
   return filteredUserRows;
 }
 
-function findById(user_id) {
-  /**
-    You will need to join two tables.
-    Resolves to the user with the given user_id.
+async function findById(user_id) {
+  const searchedUserRows = await db('users as u')
+  .leftJoin('roles as r', 'u.role_id', 'r.role_id')
+  .select(
+    'u.user_id',
+    'u.username',
+    'r.role_name'
+  )
+  .where('u.user_id', user_id)
+  .orderBy('u.user_id');
 
-    {
-      "user_id": 2,
-      "username": "sue",
-      "role_name": "instructor"
-    }
-   */
+  return searchedUserRows;
 }
 
-/**
-  Creating a user requires a single insert (into users) if the role record with the given
-  role_name already exists in the db, or two inserts (into roles and then into users)
-  if the given role_name does not exist yet.
-
-  When an operation like creating a user involves inserts to several tables,
-  we want the operation to succeed or fail as a whole. It would not do to
-  insert a new role record and then have the insertion of the user fail.
-
-  In situations like these we use transactions: if anything inside the transaction
-  fails, all the database changes in it are rolled back.
-
-  {
-    "user_id": 7,
-    "username": "anna",
-    "role_name": "team lead"
-  }
- */
-async function add({ username, password, role_name }) { // done for you
+async function add({ username, password, role_name }) {
   let created_user_id
   await db.transaction(async trx => {
     let role_id_to_use
