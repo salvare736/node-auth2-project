@@ -2,22 +2,7 @@ const router = require("express").Router();
 const Users = require("./users-model.js");
 const { restricted, only } = require("../auth/auth-middleware.js");
 
-/**
-  [GET] /api/users
-
-  This endpoint is RESTRICTED: only authenticated clients
-  should have access.
-
-  response:
-  status 200
-  [
-    {
-      "user_id": 1,
-      "username": "bob"
-    }
-  ]
- */
-router.get("/", restricted, (req, res, next) => { // done for you
+router.get("/", restricted, (req, res, next) => {
   Users.find()
     .then(users => {
       res.json(users);
@@ -46,6 +31,14 @@ router.get("/:user_id", restricted, only('admin'), (req, res, next) => { // done
       res.json(user);
     })
     .catch(next);
+});
+
+router.use((err, req, res, next) => { // eslint-disable-line
+  res.status(err.status || 500).json({
+    message: err.message,
+    stack: err.stack,
+    customMessage: 'Something went wrong inside the users router'
+  });
 });
 
 module.exports = router;
